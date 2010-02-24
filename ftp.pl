@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 # ftp.pl
+# simple interface to Net::FTP
 use strict;
 use Net::FTP;
 
@@ -26,13 +27,40 @@ while (1) {
 
     if ( $command eq "commands" ) {
         print
-"\nCommands are: \nls\npwd\ncd \(cd REMOTEPATH\)\nget \(get REMOTEFILE\)\nput \(put LOCALFILE)\nquit\n\n";
+"\nCommands are: \nls\npwd\ncd \(cd REMOTEPATH\)\nget \(get REMOTEFILE\)\nput \(put LOCALFILE\)\nquit\ndelete \(delete REMOTEFILE\)\nmkdir \(mkdir DIRNAME\)\nrmdir \(rmdir DIRNAME\)\n\n";
+        next;
+    }
+    elsif ( $command eq "delete" ) {
+        $ftp->delete($arg) or print "\nFile $arg not found\n\n" and next;
+        print "\nFile $arg deleted\n\n";
+        next;
+    }
+    elsif ( $command eq "mkdir" ) {
+        $ftp->mkdir($arg)
+          or print "\nDirectory $arg could not be made\n\n" and next;
+        print "\nDirectory $arg created\n\n";
+        next;
+    }
+    elsif ( $command eq "rmdir" ) {
+        print
+"\nRemoving directory $arg will delete all files and directories contained within, continue? \(y/n\)\n\n";
+        my $ans =;
+        chomp $ans;
+        if ( $ans eq "y" ) {
+            $ftp->rmdir( $arg, 1 )
+              or print "\nDirectory $arg could not be removed\n\n" and next;
+        }
+        else {
+            print "\nDirectory removal canceled\n\n" and next;
+        }
+        print "\nDirectory $arg removed\n\n";
         next;
     }
     elsif ( $command eq "put" ) {
         $ftp->put($arg) or print "\nFile $arg not found\n\n" and next;
         print "\nFile transfer complete\n";
         print "\nSent file $arg\n\n";
+        next;
     }
     elsif ( $command eq "get" ) {
         $ftp->get($arg) or print "\nFile $arg not found\n\n" and next;
@@ -46,10 +74,8 @@ while (1) {
         next;
     }
     elsif ( $command eq "quit" ) {
-        if ($ftp) {
-            print "\nClosing session\n";
-            $ftp->close;
-        }
+        print "\nClosing session\n";
+        $ftp->close;
         last;
     }
     elsif ( $command eq "pwd" ) {
@@ -63,10 +89,10 @@ while (1) {
             print $_, "\n";
         }
         print "\n";
+        next;
     }
     else {
         print "\nI didnt understand that\n\n";
         next;
     }
-    next;
 }
